@@ -1,2 +1,5 @@
 numpy
+scipy
+sympy
+tqdm
 matplotlib==3.6.2
