@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import itertools
 import operator
 import numpy as np
+import torch
 from scipy.special import factorial
 from scipy.stats import multinomial
 from sympy.utilities.iterables import multiset_permutations
@@ -11,6 +12,11 @@ from sys import float_info
 
 
 # ### Files ### #
+def save_metrics(my_dict, file_path="training_metrics.pkl"):
+    with open(file_path, "wb") as f:
+        pickle.dump(my_dict, f)
+
+
 def load_metrics(file_path="training_metrics.pkl"):
     # Load from a file
     with open(file_path, "rb") as f:
@@ -504,3 +510,47 @@ def calc_pyk_noised(x, n, noise_matrix):
     p_y_k = np.matmul(np.array([r]), noised_channel)
     return p_y_k, I, r
 
+
+def calc_noised_multinomial_BA(x, n, noise_matrix):
+    p = calc_multinomial_channel(x, n)
+    noised_channel = np.matmul(np.asarray(p), noise_matrix)
+    C, r = blahut_arimoto(noised_channel)
+    return C, r
+
+
+# Deep
+def probs_to_logits(probs):
+    # Ensure that the probabilities are valid (no zeroes, as log(0) is undefined)
+    probs = torch.clamp(probs, min=1e-16)
+
+    # Compute logits from probs
+    logits = torch.log(probs)
+
+    return logits
+
+
+def get_p_from_explicit_model(model, condition_dim, device, multi=False):
+    batch = torch.eye(condition_dim)
+    batch = batch.to(device)
+    if model.numerical_input:
+        # Convert one-hot encoded input to numerical indices
+        num_categories = batch.size(-1)  # Number of categories (size of one-hot vector)
+        batch = batch.argmax(dim=-1, keepdim=True).float()  # Indices as float
+        batch = batch / (num_categories - 1)  # Normalize to [0, 1]
+    mean_p = model.encoder(batch)
+    if not multi:
+        mean_p = mean_p[:, 0]
+    return mean_p.detach().cpu().numpy()
+
+
+def get_multi_encoder(model, condition_dim, device="cpu"):
+    from model_classes import ModifiedEncoder
+    # Assuming `trained_model` is your already trained model
+    modified_model = ModifiedEncoder(model)
+
+    model.eval()
+
+    with torch.no_grad():
+        input_data = torch.eye(condition_dim).to(device)
+        probs = modified_model(input_data, return_pre_activation=False).cpu()
+    return probs
