@@ -26,8 +26,8 @@ n_trials = 10
 init_n = 10
 
 # training parameter
-num_epochs = 15 # 00
-init_epochs = 5 # 00
+num_epochs = 1500
+init_epochs = 500
 
 # Visualization parameters
 res = 10
@@ -72,7 +72,7 @@ def run_list():
 
     # d value - Number of categories/classes
     min_d = 2
-    max_d = 3 # 10
+    max_d = 10
     test_vec = [d for d in range(min_d, max_d + 1)]
 
     running_p_list = []
