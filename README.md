@@ -6,4 +6,4 @@ by Adir Kobovich and Nir Weinberger
 
 The Blahut-Arimoto algorithm implementation is adapted from kobybibas/blahut_arimoto_algorithm
 
-
+![](results/isit5d.gif)
